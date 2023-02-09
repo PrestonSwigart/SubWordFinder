@@ -1,8 +1,12 @@
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Scanner;
 
 public class SubWordFinder implements WordFinder    {
 
     private ArrayList<ArrayList<String>> dictionary;
+    private String alpha = "abcdefghijklmnopqrstuvwxyz";
 
     public SubWordFinder(){
         dictionary = new ArrayList<>();
@@ -12,6 +16,30 @@ public class SubWordFinder implements WordFinder    {
         populateDictionary();
     }
 
+    /**
+     * inlist
+     * @param list
+     * @param low
+     * @param high
+     * @param target
+     * @return
+     */
+
+    public int inList(ArrayList<String> list, int low, int high, String target){
+        if(low <= high){
+            int mid = (low+high)/2;
+            if(list.get(mid).compareTo(target) < 0){
+                return mid;
+            }
+            else if(list.get(mid).compareTo(target)<0){
+                return inList(list, mid+1, high, target);
+            }
+            else{
+                return inList(list,low,mid-1,target);
+            }
+        }
+        return -1;
+    }
 
     /**
      * Populates the dictionary from the text file contents
@@ -22,8 +50,30 @@ public class SubWordFinder implements WordFinder    {
      */
     @Override
     public void populateDictionary() {
-
+        try{
+            Scanner in = new Scanner(new File("new_scrabble.txt"));
+            while(in.hasNext()){
+                String word = in.nextLine();
+                int index = alpha.indexOf(word.substring(0,1));
+                dictionary.get(index).add(word);
+            }
+            in.close();
+            for(int i = 0; i < dictionary.size(); i++){
+                Collections.sort(dictionary.get(i));
+            }
+        }
+        catch(Exception e){
+            System.out.println("Error here: " + e);
+        }
     }
+
+    /**
+    private void parseWord(String word){
+        String front = ""; String back = "";
+        for(int i )
+    }
+     */
+
 
     /**
      * Retrieve all SubWord objects from the dictionary.
@@ -40,9 +90,21 @@ public class SubWordFinder implements WordFinder    {
      */
     @Override
     public ArrayList<SubWord> getSubWords() {
-        return null;
+        ArrayList<SubWord> subwords = new ArrayList<>();
+        for (ArrayList<String> bucket : dictionary) {
+            for (String word : bucket) {
+                String front = ""; String back = "";
+                for(int i=2; i < word.length(); i++){
+                    front = word.substring(0, i);
+                    back = word.substring(i);
+                    if(inDictionary(front) && inDictionary(back)){
+                        subwords.add(new SubWord(word, front, back));
+                    }
+                }
+            }
+        }
+        return subwords;
     }
-
     /**
      * Look through the entire dictionary object to see if
      * word exists in dictionary
@@ -56,6 +118,21 @@ public class SubWordFinder implements WordFinder    {
      */
     @Override
     public boolean inDictionary(String word) {
+        ArrayList<String> bucket =  dictionary.get(alpha.indexOf(word.substring(0,1)));
+        if(bucket.contains(word)){
+            return true;
+        }
         return false;
+    }
+
+
+    public static void main(String[] args) {
+        SubWordFinder app = new SubWordFinder();
+        ArrayList<SubWord> subwords = app.getSubWords();
+        System.out.println(" * List of subwords in dictionary *");
+        for(SubWord temp : subwords){
+            System.out.println(temp);
+        }
+        System.out.println(subwords.size() + " total subwords");
     }
 }
